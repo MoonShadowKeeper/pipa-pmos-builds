@@ -45,8 +45,16 @@ jobs:
 
       - name: Build the xiaomi-pipa without DE
         run: |
+           # Включить подробный вывод и немедленный выход при ошибке для отладки
+           set -euxo pipefail 
+
            cp xiaomi-pipa.cfg ~/.config/pmbootstrap_v3.cfg
-           pmbootstrap install --password 147147
+           # Запускаем pmbootstrap install и в случае ошибки выводим содержимое лога
+           pmbootstrap install --password 147147 || { 
+             echo "::error::pmbootstrap install failed! Printing log file for details..." 
+             cat ~/.local/var/pmbootstrap/log.txt
+             exit 1 
+           }
            pmbootstrap export
            cp /tmp/postmarketOS-export/boot.img out/boot-xiaomi-pipa.img
            cp /tmp/postmarketOS-export/xiaomi-pipa.img out/rootfs-xiaomi-pipa-none.img
@@ -69,8 +77,14 @@ jobs:
         run: |
            yes | pmbootstrap zap
            rm -r out/*
-           pmbootstrap install --password 147147 --add postmarketos-ui-plasma-desktop
-           cat /home/runner/.local/var/pmbootstrap/log.txt
+           # Включить подробный вывод и немедленный выход при ошибке для отладки
+           set -euxo pipefail
+           pmbootstrap install --password 147147 --add postmarketos-ui-plasma-desktop || { 
+             echo "::error::pmbootstrap install with KDE Plasma failed! Printing log file for details..." 
+             cat ~/.local/var/pmbootstrap/log.txt
+             exit 1 
+           }
+           cat /home/runner/.local/var/pmbootstrap/log.txt # Это уже было, оставляем для удобства
            pmbootstrap export
            cp /tmp/postmarketOS-export/boot.img out/boot-xiaomi-pipa.img
            cp /tmp/postmarketOS-export/xiaomi-pipa.img out/rootfs-xiaomi-pipa-plasma.img
@@ -93,7 +107,13 @@ jobs:
         run: |
            yes | pmbootstrap zap
            rm -r out/*
-           pmbootstrap install --password 147147 --add postmarketos-ui-gnome
+           # Включить подробный вывод и немедленный выход при ошибке для отладки
+           set -euxo pipefail
+           pmbootstrap install --password 147147 --add postmarketos-ui-gnome || { 
+             echo "::error::pmbootstrap install with GNOME failed! Printing log file for details..." 
+             cat ~/.local/var/pmbootstrap/log.txt
+             exit 1 
+           }
            pmbootstrap export
            cp /tmp/postmarketOS-export/boot.img out/boot-xiaomi-pipa.img
            cp /tmp/postmarketOS-export/xiaomi-pipa.img out/rootfs-xiaomi-pipa-gnome.img
@@ -123,9 +143,3 @@ jobs:
            name: xiaomi-pipa-kernel_${{ env.CURRENT_DATE }}
            path: out/*.apk
            retention-days: 7
-
-
-
-        
-
-        
